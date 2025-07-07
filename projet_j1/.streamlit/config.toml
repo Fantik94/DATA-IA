@@ -1,0 +1,26 @@
+[global]
+
+# Mode de développement
+developmentMode = false
+
+# Configuration pour le déploiement
+showErrorDetails = false
+
+[server]
+# Configuration du serveur
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+maxUploadSize = 200
+
+[browser]
+# Configuration du navigateur
+gatherUsageStats = false
+
+[theme]
+# Thème par défaut
+primaryColor = "#1DB954"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif" 

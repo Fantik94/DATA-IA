@@ -246,10 +246,43 @@ st.markdown(f"""
 @st.cache_data
 def load_data():
     """Chargement et nettoyage des données"""
-    try:
-        df = pd.read_csv('spotify-2023.csv', encoding='utf-8')
-    except UnicodeDecodeError:
-        df = pd.read_csv('spotify-2023.csv', encoding='latin-1')
+    import os
+    
+    # Chercher le fichier CSV dans différents répertoires possibles
+    possible_paths = [
+        'spotify-2023.csv',
+        'projet_j1/spotify-2023.csv',
+        '../spotify-2023.csv',
+        os.path.join(os.path.dirname(__file__), '..', 'spotify-2023.csv'),
+        os.path.join(os.path.dirname(__file__), 'spotify-2023.csv')
+    ]
+    
+    csv_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            csv_path = path
+            break
+    
+    if csv_path is None:
+        st.error("❌ Fichier spotify-2023.csv non trouvé.")
+        st.info("💡 Vous pouvez:")
+        st.markdown("- Télécharger le fichier depuis le [dépôt GitHub](https://github.com/bapti/DATA-IA)")
+        st.markdown("- Ou utiliser le bouton ci-dessous pour charger votre propre fichier CSV")
+        
+        uploaded_file = st.file_uploader("📁 Charger votre fichier CSV Spotify", type=['csv'])
+        if uploaded_file is not None:
+            try:
+                df = pd.read_csv(uploaded_file, encoding='utf-8')
+            except UnicodeDecodeError:
+                df = pd.read_csv(uploaded_file, encoding='latin-1')
+        else:
+            st.warning("⚠️ En attente du fichier de données...")
+            st.stop()
+    else:
+        try:
+            df = pd.read_csv(csv_path, encoding='utf-8')
+        except UnicodeDecodeError:
+            df = pd.read_csv(csv_path, encoding='latin-1')
     
     # Nettoyage
     df['streams'] = pd.to_numeric(df['streams'], errors='coerce')

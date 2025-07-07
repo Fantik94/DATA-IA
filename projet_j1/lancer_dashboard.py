@@ -48,6 +48,11 @@ def show_menu():
     print("   • Visualisations matplotlib")
     print("   • Insights business")
     print()
+    print("5. 🔍 Debug Environnement")
+    print("   • Vérification des chemins")
+    print("   • Diagnostic des fichiers")
+    print("   • Aide au déploiement")
+    print()
     print("0. ❌ Quitter")
     print()
     print("=" * 66)
@@ -74,6 +79,11 @@ def launch_dashboard(choice):
         subprocess.run([sys.executable, "spotify-2023.py"])
         input("\n✅ Analyse terminée. Appuyez sur Entrée pour continuer...")
         
+    elif choice == "5":
+        print("🔍 Lancement du Debug Environnement...")
+        print("📍 URL : http://localhost:8501")
+        subprocess.run([sys.executable, "-m", "streamlit", "run", "debug_paths.py"])
+        
     elif choice == "0":
         print("👋 Au revoir !")
         sys.exit(0)
@@ -89,7 +99,8 @@ def check_files():
         "dashboard_spotify.py", 
         "dashboard_interactive.py",
         "dashboard_premium.py",
-        "spotify-2023.py"
+        "spotify-2023.py",
+        "debug_paths.py"
     ]
     
     missing_files = []
@@ -113,12 +124,12 @@ def main():
     
     while True:
         show_menu()
-        choice = input("👉 Votre choix (0-4) : ").strip()
+        choice = input("👉 Votre choix (0-5) : ").strip()
         
-        if choice in ["0", "1", "2", "3", "4"]:
+        if choice in ["0", "1", "2", "3", "4", "5"]:
             launch_dashboard(choice)
         else:
-            print("❌ Veuillez entrer un nombre entre 0 et 4.")
+            print("❌ Veuillez entrer un nombre entre 0 et 5.")
             input("Appuyez sur Entrée pour continuer...")
 
 if __name__ == "__main__":
