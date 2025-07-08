@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-PROJET DATA SCIENCE : ANALYSE SPOTIFY 2023
-===========================================
-Problématique : Analyser les facteurs de succès des titres musicaux sur Spotify 
-pour optimiser les stratégies de production et marketing musical
-
-Auteur : Expert Data Scientist
-Date : 2024
-"""
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
