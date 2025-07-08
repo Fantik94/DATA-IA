@@ -1,142 +1,93 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-LANCEUR DE DASHBOARD SPOTIFY 2023
-=================================
-Script pour choisir et lancer le dashboard souhaité
-
-Auteur : Expert Data Scientist  
-Date : 2024
+SPOTIFY ANALYTICS - LANCEUR DE DASHBOARD SIMPLIFIÉ
+=================================================
+Sélecteur entre le dashboard principal et le lancement en ligne de commande
 """
 
-import os
 import subprocess
 import sys
+import os
 
 def clear_screen():
     """Nettoie l'écran"""
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def show_menu():
-    """Affiche le menu des dashboards"""
+    """Affiche le menu simplifié"""
     clear_screen()
     print("🎵" + "=" * 60 + "🎵")
-    print("         SPOTIFY 2023 - SÉLECTEUR DE DASHBOARD")
+    print("       SPOTIFY ANALYTICS 2023 - DASHBOARD SELECTOR")
     print("🎵" + "=" * 60 + "🎵")
     print()
-    print("Choisissez votre dashboard :")
+    print("📊 DASHBOARDS DISPONIBLES :")
     print()
-    print("1. 📊 Dashboard Standard")
-    print("   • Analyse complète des données")
-    print("   • Graphiques interactifs")
-    print("   • Filtres dynamiques")
+    print("1️⃣  Dashboard Principal (Recommandé)")
+    print("    └─ Interface complète avec analyses et visualisations")
     print()
-    print("2. 🚀 Dashboard Ultra-Interactif")  
-    print("   • Boutons cliquables")
-    print("   • Comparaisons dynamiques")
-    print("   • Animations CSS")
-    print("   • Design Spotify-inspired")
+    print("2️⃣  Analyse en Ligne de Commande")
+    print("    └─ Script d'analyse complet avec visualisations PNG")
     print()
-    print("3. 💎 Dashboard Premium")
-    print("   • Charte graphique cohérente")
-    print("   • Top 10 des artistes/titres")
-    print("   • Design professionnel unifié")
-    print("   • Palette Spotify exclusive")
+    print("0️⃣  Quitter")
     print()
-    print("4. 📈 Analyse Python (script)")
-    print("   • Analyses statistiques complètes")
-    print("   • Visualisations matplotlib")
-    print("   • Insights business")
-    print()
-    print("5. 🔍 Debug Environnement")
-    print("   • Vérification des chemins")
-    print("   • Diagnostic des fichiers")
-    print("   • Aide au déploiement")
-    print()
-    print("0. ❌ Quitter")
-    print()
-    print("=" * 66)
+    print("🎯 Choisissez une option (1-2 ou 0) :")
 
-def launch_dashboard(choice):
+def run_dashboard(choice):
     """Lance le dashboard sélectionné"""
     if choice == "1":
-        print("🚀 Lancement du Dashboard Standard...")
-        print("📍 URL : http://localhost:8501")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "dashboard_spotify.py"])
+        print("\n🚀 Lancement du Dashboard Principal...")
+        print("📱 Votre navigateur va s'ouvrir automatiquement")
+        print("🔗 URL locale : http://localhost:8501")
+        print("\n⏳ Chargement en cours...")
         
+        try:
+            subprocess.run([sys.executable, "-m", "streamlit", "run", "dashboard_premium.py"], 
+                         check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Erreur lors du lancement : {e}")
+        except KeyboardInterrupt:
+            print("\n🛑 Dashboard arrêté par l'utilisateur")
+            
     elif choice == "2":
-        print("🚀 Lancement du Dashboard Ultra-Interactif...")
-        print("📍 URL : http://localhost:8501")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "dashboard_interactive.py"])
+        print("\n🔍 Lancement de l'analyse en ligne de commande...")
+        print("📊 Génération des analyses et visualisations...")
         
-    elif choice == "3":
-        print("🚀 Lancement du Dashboard Premium...")
-        print("📍 URL : http://localhost:8501")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "dashboard_premium.py"])
-        
-    elif choice == "4":
-        print("🚀 Exécution de l'analyse Python...")
-        subprocess.run([sys.executable, "spotify-2023.py"])
-        input("\n✅ Analyse terminée. Appuyez sur Entrée pour continuer...")
-        
-    elif choice == "5":
-        print("🔍 Lancement du Debug Environnement...")
-        print("📍 URL : http://localhost:8501")
-        subprocess.run([sys.executable, "-m", "streamlit", "run", "debug_paths.py"])
-        
-    elif choice == "0":
-        print("👋 Au revoir !")
-        sys.exit(0)
-        
-    else:
-        print("❌ Choix invalide !")
-        input("Appuyez sur Entrée pour continuer...")
-
-def check_files():
-    """Vérifie la présence des fichiers nécessaires"""
-    required_files = [
-        "spotify-2023.csv",
-        "dashboard_spotify.py", 
-        "dashboard_interactive.py",
-        "dashboard_premium.py",
-        "spotify-2023.py",
-        "debug_paths.py"
-    ]
-    
-    missing_files = []
-    for file in required_files:
-        if not os.path.exists(file):
-            missing_files.append(file)
-    
-    if missing_files:
-        print("⚠️ Fichiers manquants :")
-        for file in missing_files:
-            print(f"   • {file}")
-        print("\nVeuillez vous assurer que tous les fichiers sont présents.")
-        input("Appuyez sur Entrée pour continuer...")
-        return False
-    return True
+        try:
+            subprocess.run([sys.executable, "spotify-2023.py"], check=True)
+            print("\n✅ Analyse terminée !")
+            print("📁 Fichier généré : spotify_analysis_complete.png")
+            input("\nAppuyez sur Entrée pour revenir au menu...")
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Erreur lors de l'analyse : {e}")
+            input("\nAppuyez sur Entrée pour revenir au menu...")
+        except KeyboardInterrupt:
+            print("\n🛑 Analyse interrompue par l'utilisateur")
+            input("\nAppuyez sur Entrée pour revenir au menu...")
 
 def main():
     """Fonction principale"""
-    if not check_files():
-        return
-    
     while True:
         show_menu()
-        choice = input("👉 Votre choix (0-5) : ").strip()
         
-        if choice in ["0", "1", "2", "3", "4", "5"]:
-            launch_dashboard(choice)
-        else:
-            print("❌ Veuillez entrer un nombre entre 0 et 5.")
+        try:
+            choice = input().strip()
+            
+            if choice == "0":
+                print("\n👋 Au revoir ! Merci d'avoir utilisé Spotify Analytics 2023")
+                break
+            elif choice in ["1", "2"]:
+                run_dashboard(choice)
+            else:
+                print(f"\n❌ Option '{choice}' non valide. Choisissez 1, 2 ou 0.")
+                input("Appuyez sur Entrée pour continuer...")
+                
+        except KeyboardInterrupt:
+            print("\n\n👋 Au revoir ! Merci d'avoir utilisé Spotify Analytics 2023")
+            break
+        except Exception as e:
+            print(f"\n❌ Erreur inattendue : {e}")
             input("Appuyez sur Entrée pour continuer...")
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n\n👋 Interruption par l'utilisateur. Au revoir !")
-    except Exception as e:
-        print(f"\n❌ Erreur : {e}")
-        input("Appuyez sur Entrée pour quitter...") 
+    main() 
