@@ -12,7 +12,10 @@ Ce projet implémente l'utilisation d'un LLM via API et un système de function 
 
 - **`writeFile(path: str, content: str) -> bool`** : Écrit du contenu dans un fichier
 - **`launchPythonFile(path: str) -> str`** : Exécute un fichier Python
-- **`function_calling_system(user_request: str) -> Dict`** : Système qui demande au LLM de choisir et exécuter une fonction
+- **`choose_tool(context: str) -> str`** : Demande au LLM de choisir un outil approprié
+- **`stop(reason: str) -> Dict`** : Arrête le processus d'itération
+- **`function_calling_system(user_request: str) -> Dict`** : Système simple de function calling
+- **`iterative_function_calling_system(user_request: str, max_iterations: int) -> Dict`** : Système avancé avec itérations et feedback
 
 ## Installation
 
@@ -25,7 +28,13 @@ pip install -r requirements.txt
 
 ### Test complet
 ```bash
-python llm_function_calling.py
+python llm_function_calling.py          # Tests basiques
+python test_iteratif.py                 # Tests du système itératif
+```
+
+### Chat interactif
+```bash
+python chat_interactif.py               # Interface de chat avec couleurs et animations
 ```
 
 ### Utilisation des fonctions individuelles
@@ -49,7 +58,9 @@ result = function_calling_system("Crée un fichier Python qui affiche 'Bonjour l
 
 ## Structure du projet
 
-- `llm_function_calling.py` : Script principal avec toutes les fonctions
+- `llm_function_calling.py` : Script principal avec toutes les fonctions (simple et itératif)
+- `chat_interactif.py` : Interface de chat interactive avec couleurs et animations
+- `test_iteratif.py` : Tests pour le système itératif
 - `requirements.txt` : Dépendances Python
 - `hello_world.py` : Fichier exemple créé par le LLM
 
@@ -60,13 +71,31 @@ L'API key Mistral est configurée dans le script. Pour utiliser votre propre cl�
 1. Remplacez la valeur de `MISTRAL_API_KEY` dans le script
 2. Ou définissez une variable d'environnement `MISTRAL_API_KEY`
 
+## Fonctionnalités avancées
+
+### Système itératif
+Le nouveau système `iterative_function_calling_system` permet :
+- **Itérations multiples** : Jusqu'à N itérations pour accomplir une tâche complexe
+- **Feedback automatique** : Le LLM évalue ses propres résultats et décide s'il faut continuer
+- **Choix d'outils** : Sélection intelligente entre writeFile, launchPythonFile, choose_tool, stop
+- **Historique de conversation** : Contexte maintenu entre les itérations
+- **Arrêt automatique** : Le LLM peut décider d'arrêter quand la tâche est accomplie
+
+### Interface chat interactive
+- **Couleurs et animations** : Interface utilisateur moderne avec animations de chargement
+- **Deux modes** : Chat normal et function calling
+- **Commandes** : /aide, /function, /normal, /quit, /clear
+- **Format JSON natif** : Plus de nettoyage de balises markdown nécessaire
+
 ## Tests effectués
 
 ✅ **Test de generateText** : Fonction opérationnelle, génère du texte via l'API Mistral  
 ✅ **Test de writeFile** : Crée correctement des fichiers  
 ✅ **Test de launchPythonFile** : Exécute correctement les scripts Python  
-✅ **Test de function calling** : Le LLM choisit et exécute les bonnes fonctions  
-✅ **Test Hello World** : Le LLM a créé et exécuté avec succès un fichier "Hello World"
+✅ **Test de function calling simple** : Le LLM choisit et exécute les bonnes fonctions  
+✅ **Test de function calling itératif** : Système avec feedback et itérations multiples  
+✅ **Test Hello World** : Le LLM a créé et exécuté avec succès un fichier "Hello World"  
+✅ **Interface chat** : Chat interactif avec couleurs et modes multiples
 
 ## Résultats
 
