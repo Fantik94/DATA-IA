@@ -5,8 +5,6 @@ DASHBOARD PREMIUM SPOTIFY 2023
 ===============================
 Dashboard avec charte graphique cohérente et fonctionnalités avancées
 
-Auteur : Expert Data Scientist
-Date : 2024
 """
 
 import streamlit as st
@@ -15,12 +13,13 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import time
 import warnings
 warnings.filterwarnings('ignore')
 
 # Configuration de la page
 st.set_page_config(
-    page_title="🎵 Spotify Premium Analytics",
+    page_title="🎵 Spotify 2023 Analytics",
     page_icon="🎵",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -266,7 +265,7 @@ def load_data():
     if csv_path is None:
         st.error("❌ Fichier spotify-2023.csv non trouvé.")
         st.info("💡 Vous pouvez:")
-        st.markdown("- Télécharger le fichier depuis le [dépôt GitHub](https://github.com/bapti/DATA-IA)")
+        st.markdown("- Télécharger le fichier depuis le [dépôt GitHub](https://github.com/Fantik94/DATA-IA)")
         st.markdown("- Ou utiliser le bouton ci-dessous pour charger votre propre fichier CSV")
         
         uploaded_file = st.file_uploader("📁 Charger votre fichier CSV Spotify", type=['csv'])
@@ -338,15 +337,15 @@ def create_sidebar_filters(df):
     st.sidebar.markdown("""
     <div style='background: linear-gradient(135deg, #1DB954, #191414); 
                 padding: 1rem; border-radius: 10px; margin-bottom: 1rem; text-align: center;'>
-        <h2 style='color: white; margin: 0;'>🎛️ CONTRÔLES</h2>
+        <h2 style='color: white; margin: 0;'> CONTRÔLES</h2>
     </div>
     """, unsafe_allow_html=True)
     
     # Section principale d'analyse
-    st.sidebar.markdown("### 🎯 **TYPE D'ANALYSE**")
+    st.sidebar.markdown("###  **TYPE D'ANALYSE**")
     analysis_mode = st.sidebar.radio(
         "",
-        ["📊 Vue d'ensemble", "🏆 Top Performers", "🎼 Analyse Musicale", "📅 Tendances", "⚔️ Comparaisons"],
+        [" Vue d'ensemble", " Top Performers", " Analyse Musicale", " Tendances", " Comparaisons"],
         key="analysis_mode"
     )
     
@@ -363,7 +362,7 @@ def create_sidebar_filters(df):
     )
     
     # Filtres de succès
-    st.sidebar.markdown("### 🎯 **NIVEAUX DE SUCCÈS**")
+    st.sidebar.markdown("###  **NIVEAUX DE SUCCÈS**")
     categories = df['success_category'].cat.categories.tolist()
     selected_categories = st.sidebar.multiselect(
         "",
@@ -372,7 +371,7 @@ def create_sidebar_filters(df):
     )
     
     # Filtres avancés dans un expander
-    with st.sidebar.expander("🔧 **FILTRES AVANCÉS**"):
+    with st.sidebar.expander(" **FILTRES AVANCÉS**"):
         # Plage de streams
         min_streams = int(df['streams'].min() // 1_000_000)
         max_streams = int(df['streams'].max() // 1_000_000)
@@ -392,12 +391,12 @@ def create_sidebar_filters(df):
         
         # Caractéristiques musicales
         st.markdown("**🎵 Caractéristiques Musicales**")
-        danceability_range = st.slider("💃 Danceability", 0, 100, (0, 100))
-        energy_range = st.slider("⚡ Energy", 0, 100, (0, 100))
-        valence_range = st.slider("😊 Valence", 0, 100, (0, 100))
+        danceability_range = st.slider(" Danceability", 0, 100, (0, 100))
+        energy_range = st.slider(" Energy", 0, 100, (0, 100))
+        valence_range = st.slider(" Valence", 0, 100, (0, 100))
     
     # Paramètres d'affichage
-    with st.sidebar.expander("🎨 **AFFICHAGE**"):
+    with st.sidebar.expander(" **AFFICHAGE**"):
         top_n = st.slider("Nombre d'éléments dans les tops", 5, 20, 10)
         show_percentages = st.checkbox("Afficher les pourcentages", True)
         animate_charts = st.checkbox("Animations", True)
@@ -416,8 +415,9 @@ def create_sidebar_filters(df):
         'animate_charts': animate_charts
     }
 
+@st.cache_data
 def apply_filters(df, filters):
-    """Application des filtres"""
+    """Application des filtres avec cache pour améliorer les performances"""
     filtered_df = df.copy()
     
     # Filtres temporels
@@ -451,11 +451,11 @@ def create_kpis_dashboard(df):
     col1, col2, col3, col4, col5 = st.columns(5)
     
     kpis = [
-        ("🎵", "Titres", f"{len(df):,}", "Nombre total de titres"),
-        ("📊", "Streams", f"{df['streams'].sum()/1e9:.1f}B", "Streams cumulés"),
-        ("📈", "Moyenne", f"{df['streams'].mean()/1e6:.0f}M", "Streams par titre"),
-        ("🎤", "Artistes", f"{df['artist(s)_name'].nunique():,}", "Artistes uniques"),
-        ("🏆", "Hits", f"{len(df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])])} ({len(df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])])/len(df)*100:.1f}%)", "Hits et Mega-hits")
+        ("", "Titres", f"{len(df):,}", "Nombre total de titres"),
+        ("", "Streams", f"{df['streams'].sum()/1e9:.1f}B", "Streams cumulés"),
+        ("", "Moyenne", f"{df['streams'].mean()/1e6:.0f}M", "Streams par titre"),
+        ("", "Artistes", f"{df['artist(s)_name'].nunique():,}", "Artistes uniques"),
+        ("", "Hits", f"{len(df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])])} ({len(df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])])/len(df)*100:.1f}%)", "Hits et Mega-hits")
     ]
     
     for i, (icon, label, value, description) in enumerate(kpis):
@@ -471,9 +471,19 @@ def create_kpis_dashboard(df):
             </div>
             """, unsafe_allow_html=True)
 
+@st.cache_data
+def calculate_top_artists(df, top_n):
+    """Calcul des top artistes avec cache"""
+    return df.groupby('artist(s)_name')['streams'].sum().sort_values(ascending=False).head(top_n)
+
+@st.cache_data 
+def calculate_top_songs(df, top_n):
+    """Calcul des top titres avec cache"""
+    return df.nlargest(top_n, 'streams')[['track_name', 'artist(s)_name', 'streams', 'success_category']]
+
 def create_top_performers(df, filters):
     """Section Top Performers avec design cohérent"""
-    st.markdown('<h2 class="section-header">🏆 TOP PERFORMERS</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header"> TOP PERFORMERS</h2>', unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
@@ -485,7 +495,7 @@ def create_top_performers(df, filters):
         </div>
         """, unsafe_allow_html=True)
         
-        top_artists = df.groupby('artist(s)_name')['streams'].sum().sort_values(ascending=False).head(filters['top_n'])
+        top_artists = calculate_top_artists(df, filters['top_n'])
         
         fig_artists = go.Figure(data=[
             go.Bar(
@@ -522,7 +532,7 @@ def create_top_performers(df, filters):
         </div>
         """, unsafe_allow_html=True)
         
-        top_songs = df.nlargest(filters['top_n'], 'streams')[['track_name', 'artist(s)_name', 'streams', 'success_category']]
+        top_songs = calculate_top_songs(df, filters['top_n'])
         
         for i, (_, song) in enumerate(top_songs.iterrows()):
             rank_color = SPOTIFY_GREEN if i < 3 else SPOTIFY_GRAY
@@ -555,15 +565,27 @@ def create_top_performers(df, filters):
             </div>
             """, unsafe_allow_html=True)
 
+@st.cache_data
+def calculate_distribution_data(df):
+    """Calcul des données de distribution avec cache"""
+    return {
+        'success_counts': df['success_category'].value_counts(),
+        'collab_counts': df['artist_count'].value_counts().sort_index(),
+        'year_counts': df['released_year'].value_counts().sort_index()
+    }
+
 def create_donut_charts_spotify(df, filters):
     """Graphiques en donut avec palette Spotify"""
     st.markdown('<h2 class="section-header">🍩 RÉPARTITIONS</h2>', unsafe_allow_html=True)
+    
+    # Récupération des données avec cache
+    dist_data = calculate_distribution_data(df)
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         # Donut succès
-        success_counts = df['success_category'].value_counts()
+        success_counts = dist_data['success_counts']
         colors_success = [SPOTIFY_GREEN, "#1ed760", "#1aa34a", "#0e7e32"]
         
         fig1 = go.Figure(data=[go.Pie(
@@ -577,7 +599,7 @@ def create_donut_charts_spotify(df, filters):
         )])
         
         fig1.update_layout(
-            title=dict(text="🎯 Niveaux de Succès", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
+            title=dict(text=" Niveaux de Succès", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
             showlegend=True,
             height=350,
             plot_bgcolor='rgba(0,0,0,0)',
@@ -595,7 +617,7 @@ def create_donut_charts_spotify(df, filters):
     
     with col2:
         # Donut collaborations
-        collab_counts = df['artist_count'].value_counts().sort_index()
+        collab_counts = dist_data['collab_counts']
         
         fig2 = go.Figure(data=[go.Pie(
             labels=[f"{i} Artiste{'s' if i > 1 else ''}" for i in collab_counts.index],
@@ -607,7 +629,7 @@ def create_donut_charts_spotify(df, filters):
         )])
         
         fig2.update_layout(
-            title=dict(text="👥 Collaborations", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
+            title=dict(text=" Collaborations", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
             showlegend=True,
             height=350,
             plot_bgcolor='rgba(0,0,0,0)',
@@ -618,7 +640,7 @@ def create_donut_charts_spotify(df, filters):
     
     with col3:
         # Donut années
-        year_counts = df['released_year'].value_counts().sort_index()
+        year_counts = dist_data['year_counts']
         
         fig3 = go.Figure(data=[go.Pie(
             labels=year_counts.index,
@@ -676,7 +698,7 @@ def create_musical_analysis(df, filters):
                 angularaxis=dict(color=SPOTIFY_BLACK)
             ),
             showlegend=True,
-            title=dict(text="🎯 Profils Musicaux par Succès", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
+            title=dict(text=" Profils Musicaux par Succès", x=0.5, font=dict(size=16, color=SPOTIFY_BLACK)),
             height=400,
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)'
@@ -686,7 +708,7 @@ def create_musical_analysis(df, filters):
     
     with col2:
         # Top genres par BPM
-        st.markdown("### 🥁 **ANALYSE BPM**")
+        st.markdown("###  **ANALYSE BPM**")
         
         # Bins BPM
         df['bpm_range'] = pd.cut(df['bpm'], bins=[0, 90, 120, 140, 180, 300], 
@@ -719,9 +741,27 @@ def create_musical_analysis(df, filters):
         
         st.plotly_chart(fig_bpm, use_container_width=True)
 
+@st.cache_data
+def calculate_temporal_stats(df):
+    """Calcul des statistiques temporelles avec cache"""
+    monthly_stats = df.groupby('released_month').agg({
+        'streams': ['mean', 'count']
+    }).round(0)
+    monthly_stats.columns = ['Streams_Moy', 'Nb_Sorties']
+    
+    yearly_stats = df.groupby('released_year').agg({
+        'streams': ['mean', 'sum', 'count']
+    })
+    yearly_stats.columns = ['Streams_Moy', 'Streams_Total', 'Nb_Titres']
+    
+    return monthly_stats, yearly_stats
+
 def create_temporal_trends(df, filters):
     """Tendances temporelles avec design Spotify"""
-    st.markdown('<h2 class="section-header">📅 TENDANCES TEMPORELLES</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header"> TENDANCES TEMPORELLES</h2>', unsafe_allow_html=True)
+    
+    # Récupération des données avec cache
+    monthly_stats, yearly_stats = calculate_temporal_stats(df)
     
     col1, col2 = st.columns(2)
     
@@ -729,15 +769,9 @@ def create_temporal_trends(df, filters):
         # Évolution par mois
         st.markdown("""
         <div class="top-card">
-            <h3>📈 ÉVOLUTION PAR MOIS DE SORTIE</h3>
+            <h3> ÉVOLUTION PAR MOIS DE SORTIE</h3>
         </div>
         """, unsafe_allow_html=True)
-        
-        monthly_stats = df.groupby('released_month').agg({
-            'streams': ['mean', 'count']
-        }).round(0)
-        
-        monthly_stats.columns = ['Streams_Moy', 'Nb_Sorties']
         
         months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 
                  'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
@@ -792,10 +826,7 @@ def create_temporal_trends(df, filters):
         </div>
         """, unsafe_allow_html=True)
         
-        yearly_stats = df.groupby('released_year').agg({
-            'streams': ['mean', 'sum', 'count']
-        })
-        yearly_stats.columns = ['Streams_Moy', 'Streams_Total', 'Nb_Titres']
+
         
         fig_yearly = go.Figure()
         
@@ -823,7 +854,7 @@ def create_temporal_trends(df, filters):
         st.plotly_chart(fig_yearly, use_container_width=True)
     
     # Insights temporels
-    st.markdown("### 💡 **INSIGHTS TEMPORELS**")
+    st.markdown("###  **INSIGHTS TEMPORELS**")
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -831,7 +862,7 @@ def create_temporal_trends(df, filters):
         best_month_name = months[best_month-1]
         st.markdown(f"""
         <div class="insight-box">
-            <h4>🏆 Meilleur Mois</h4>
+            <h4> Meilleur Mois</h4>
             <p><strong>{best_month_name}</strong></p>
             <p>{monthly_stats.loc[best_month, 'Streams_Moy']:,.0f} streams moy.</p>
         </div>
@@ -857,9 +888,31 @@ def create_temporal_trends(df, filters):
         </div>
         """, unsafe_allow_html=True)
 
+@st.cache_data
+def calculate_comparison_data(df):
+    """Calcul des données de comparaison avec cache"""
+    hits = df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])]
+    others = df[~df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])]
+    solo = df[df['artist_count'] == 1]
+    collab = df[df['artist_count'] > 1]
+    major = df[df['mode'] == 'Major'] if 'mode' in df.columns else df.iloc[:0]
+    minor = df[df['mode'] == 'Minor'] if 'mode' in df.columns else df.iloc[:0]
+    recent = df[df['released_year'] == 2023]
+    old = df[df['released_year'] == 2022]
+    
+    return {
+        'hits': hits, 'others': others,
+        'solo': solo, 'collab': collab,
+        'major': major, 'minor': minor,
+        'recent': recent, 'old': old
+    }
+
 def create_comparisons(df, filters):
     """Comparaisons avancées avec boutons interactifs"""
-    st.markdown('<h2 class="section-header">⚔️ COMPARAISONS INTERACTIVES</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 class="section-header"> COMPARAISONS INTERACTIVES</h2>', unsafe_allow_html=True)
+    
+    # Récupération des données avec cache
+    comp_data = calculate_comparison_data(df)
     
     # Boutons de comparaison
     col1, col2, col3, col4 = st.columns(4)
@@ -875,10 +928,10 @@ def create_comparisons(df, filters):
     
     # Section de comparaison
     if hits_vs_other:
-        st.markdown("### 🔥 **HITS vs AUTRES TITRES**")
+        st.markdown("###  **HITS vs AUTRES TITRES**")
         
-        hits = df[df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])]
-        others = df[~df['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])]
+        hits = comp_data['hits']
+        others = comp_data['others']
         
         col1, col2 = st.columns(2)
         
@@ -898,7 +951,7 @@ def create_comparisons(df, filters):
             # Métriques autres
             st.markdown(f"""
             <div class="metric-card">
-                <h4 style="color: {SPOTIFY_BLACK};">⭐ AUTRES TITRES</h4>
+                <h4 style="color: {SPOTIFY_BLACK};"> AUTRES TITRES</h4>
                 <p><strong>{len(others)}</strong> titres ({len(others)/len(df)*100:.1f}%)</p>
                 <p><strong>{others['streams'].mean()/1e6:.0f}M</strong> streams moy.</p>
                 <p><strong>{others['danceability_%'].mean():.0f}%</strong> danceability</p>
@@ -945,7 +998,7 @@ def create_comparisons(df, filters):
         st.plotly_chart(fig_comparison, use_container_width=True)
     
     elif solo_vs_collab:
-        st.markdown("### 👤 **SOLO vs COLLABORATIONS**")
+        st.markdown("###  **SOLO vs COLLABORATIONS**")
         
         solo = df[df['artist_count'] == 1]
         collab = df[df['artist_count'] > 1]
@@ -967,7 +1020,7 @@ def create_comparisons(df, filters):
             success_rate_collab = len(collab[collab['success_category'].isin(['🔥 Hit', '💎 Mega-Hit'])]) / len(collab) * 100
             st.markdown(f"""
             <div class="metric-card">
-                <h4 style="color: {SPOTIFY_BLACK};">🤝 COLLABORATIONS</h4>
+                <h4 style="color: {SPOTIFY_BLACK};"> COLLABORATIONS</h4>
                 <p><strong>{len(collab)}</strong> titres</p>
                 <p><strong>{collab['streams'].mean()/1e6:.0f}M</strong> streams moy.</p>
                 <p><strong>{success_rate_collab:.1f}%</strong> taux de succès</p>
@@ -1015,7 +1068,7 @@ def create_comparisons(df, filters):
             with col1:
                 st.markdown(f"""
                 <div class="top-card">
-                    <h4>📅 SORTIES 2023</h4>
+                    <h4> SORTIES 2023</h4>
                     <p><strong>{len(recent)}</strong> titres</p>
                     <p><strong>{recent['streams'].mean()/1e6:.0f}M</strong> streams moy.</p>
                     <p><strong>{recent['total_playlists'].mean():.0f}</strong> playlists moy.</p>
@@ -1025,7 +1078,7 @@ def create_comparisons(df, filters):
             with col2:
                 st.markdown(f"""
                 <div class="metric-card">
-                    <h4 style="color: {SPOTIFY_BLACK};">📅 SORTIES 2022</h4>
+                    <h4 style="color: {SPOTIFY_BLACK};"> SORTIES 2022</h4>
                     <p><strong>{len(old)}</strong> titres</p>
                     <p><strong>{old['streams'].mean()/1e6:.0f}M</strong> streams moy.</p>
                     <p><strong>{old['total_playlists'].mean():.0f}</strong> playlists moy.</p>
@@ -1052,18 +1105,31 @@ def main():
     # Header principal
     st.markdown("""
     <div class="main-header">
-        <h1>🎵 SPOTIFY PREMIUM ANALYTICS</h1>
-        <p>Dashboard professionnel avec charte graphique Spotify</p>
-        <p>🏆 Tops • 🍩 Donuts • 📊 Analytics • 🎨 Design Premium</p>
+        <h1>🎵 SPOTIFY 2023 ANALYTICS</h1>
+        <p> Tops •  Donuts • Analytics </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Chargement des données
+    # Chargement des données avec métriques de performance
+    start_time = time.time()
     df = load_data()
+    load_time = time.time() - start_time
     
     # Filtres sidebar
     filters = create_sidebar_filters(df)
+    
+    # Application des filtres avec mesure du temps
+    filter_start = time.time()
     filtered_df = apply_filters(df, filters)
+    filter_time = time.time() - filter_start
+    
+    # Affichage des métriques de performance dans la sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("###  **PERFORMANCE**")
+    st.sidebar.success(f"Données chargées: **{load_time:.2f}s**")
+    st.sidebar.success(f" Filtrage: **{filter_time:.3f}s**")
+    st.sidebar.info(f" Cache actif ({len(filtered_df)} titres)")
+    st.sidebar.caption(f" Mis à jour: {time.strftime('%H:%M:%S')}")
     
     if len(filtered_df) == 0:
         st.error("⚠️ Aucune donnée correspondante. Ajustez vos filtres.")
@@ -1073,29 +1139,25 @@ def main():
     create_kpis_dashboard(filtered_df)
     
     # Contenu selon le mode d'analyse
-    if filters['analysis_mode'] == "📊 Vue d'ensemble":
+    if filters['analysis_mode'] == " Vue d'ensemble":
         create_donut_charts_spotify(filtered_df, filters)
         
-    elif filters['analysis_mode'] == "🏆 Top Performers":
+    elif filters['analysis_mode'] == " Top Performers":
         create_top_performers(filtered_df, filters)
         
-    elif filters['analysis_mode'] == "🎼 Analyse Musicale":
+    elif filters['analysis_mode'] == "Analyse Musicale":
         create_musical_analysis(filtered_df, filters)
         
-    elif filters['analysis_mode'] == "📅 Tendances":
+    elif filters['analysis_mode'] == "Tendances":
         create_temporal_trends(filtered_df, filters)
         
-    elif filters['analysis_mode'] == "⚔️ Comparaisons":
+    elif filters['analysis_mode'] == " Comparaisons":
         create_comparisons(filtered_df, filters)
     
     # Footer
     st.markdown("---")
     st.markdown(f"""
-    <div style='text-align: center; background: linear-gradient(135deg, {SPOTIFY_WHITE}, #f8f9fa); 
-                border: 2px solid {SPOTIFY_GREEN}; border-radius: 15px; padding: 2rem; margin: 2rem 0;'>
-        <h3 style='color: {SPOTIFY_BLACK};'>🎵 Spotify Premium Analytics</h3>
-        <p style='color: {SPOTIFY_GRAY};'>Design cohérent • Charte graphique professionnelle • Expérience utilisateur optimale</p>
-    </div>
+ 
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":

@@ -193,6 +193,6 @@ Les insights générés peuvent directement informer les décisions stratégique
 
 ---
 
-**Auteur** : Expert Data Scientist  
-**Date** : 2024  
+**Auteurs** : RINGLER Baptiste, RAUNIER Damien  
+**Date** : 2025 
 **Technologies** : Python, Streamlit, Plotly, Pandas 
