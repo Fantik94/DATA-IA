@@ -2,9 +2,13 @@ import json
 import subprocess
 import os
 import time
+import requests
+import base64
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from mistralai import Mistral
+from bs4 import BeautifulSoup
+from PIL import Image
 
 load_dotenv()
 
@@ -128,6 +132,217 @@ def stop(reason: str = "Tâche terminée") -> Dict[str, Any]:
     }
 
 
+def listFiles(directory: str = ".") -> Dict[str, Any]:
+    """
+    Liste les fichiers et dossiers d'un répertoire.
+    
+    Args:
+        directory (str): Le répertoire à explorer (par défaut le répertoire courant)
+        
+    Returns:
+        Dict: Informations sur les fichiers et dossiers
+    """
+    try:
+        files = []
+        directories = []
+        
+        for item in os.listdir(directory):
+            item_path = os.path.join(directory, item)
+            if os.path.isfile(item_path):
+                size = os.path.getsize(item_path)
+                files.append({
+                    "name": item,
+                    "path": item_path,
+                    "size": size,
+                    "extension": os.path.splitext(item)[1]
+                })
+            elif os.path.isdir(item_path):
+                directories.append({
+                    "name": item,
+                    "path": item_path
+                })
+        
+        return {
+            "success": True,
+            "directory": directory,
+            "files": files,
+            "directories": directories,
+            "total_files": len(files),
+            "total_directories": len(directories)
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erreur lors de la lecture du répertoire {directory}: {e}"
+        }
+
+
+def readFile(file_path: str) -> Dict[str, Any]:
+    """
+    Lit le contenu d'un fichier existant.
+    
+    Args:
+        file_path (str): Le chemin du fichier à lire
+        
+    Returns:
+        Dict: Le contenu du fichier et ses métadonnées
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        file_stats = os.stat(file_path)
+        
+        return {
+            "success": True,
+            "file_path": file_path,
+            "content": content,
+            "lines": len(content.split('\n')),
+            "size": file_stats.st_size,
+            "extension": os.path.splitext(file_path)[1]
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erreur lors de la lecture du fichier {file_path}: {e}"
+        }
+
+
+def runTests(test_path: str = "test_*.py") -> Dict[str, Any]:
+    """
+    Exécute des tests unitaires avec pytest.
+    
+    Args:
+        test_path (str): Le chemin ou pattern des fichiers de test
+        
+    Returns:
+        Dict: Résultat de l'exécution des tests
+    """
+    try:
+        result = subprocess.run(['python', '-m', 'pytest', test_path, '-v'], 
+                              capture_output=True, 
+                              text=True)
+        
+        return {
+            "success": result.returncode == 0,
+            "return_code": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "test_path": test_path
+        }
+    except FileNotFoundError:
+        return {
+            "success": False,
+            "error": "pytest n'est pas installé. Installez-le avec: pip install pytest"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erreur lors de l'exécution des tests: {e}"
+        }
+
+
+def webScraping(url: str, selector: str = None) -> Dict[str, Any]:
+    """
+    Effectue du web scraping sur une URL donnée.
+    
+    Args:
+        url (str): L'URL à scraper
+        selector (str): Sélecteur CSS optionnel pour extraire des éléments spécifiques
+        
+    Returns:
+        Dict: Données scrapées
+    """
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        if selector:
+            elements = soup.select(selector)
+            data = [elem.get_text(strip=True) for elem in elements]
+        else:
+            data = {
+                "title": soup.title.string if soup.title else "Pas de titre",
+                "text_content": soup.get_text()[:1000],  # Premier 1000 caractères
+                "links": [a.get('href') for a in soup.find_all('a', href=True)[:10]]
+            }
+        
+        return {
+            "success": True,
+            "url": url,
+            "data": data,
+            "status_code": response.status_code
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erreur lors du scraping de {url}: {e}"
+        }
+
+
+def analyzeImage(image_path: str, prompt: str = "Décris cette image en détail") -> Dict[str, Any]:
+    """
+    Analyse une image avec le modèle vision Pixtral de Mistral.
+    
+    Args:
+        image_path (str): Le chemin vers l'image à analyser
+        prompt (str): La question/prompt pour l'analyse
+        
+    Returns:
+        Dict: Résultat de l'analyse de l'image
+    """
+    try:
+        # Vérifier que le fichier image existe
+        if not os.path.exists(image_path):
+            return {
+                "success": False,
+                "error": f"Image non trouvée: {image_path}"
+            }
+        
+        # Encoder l'image en base64
+        with open(image_path, "rb") as image_file:
+            encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
+        
+        # Préparer les messages pour Pixtral
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": f"data:image/jpeg;base64,{encoded_image}"
+                    }
+                ]
+            }
+        ]
+        
+        # Appel à Pixtral (modèle vision de Mistral)
+        response = client.chat.complete(
+            model="pixtral-12b-2409",
+            messages=messages,
+            max_tokens=1000
+        )
+        
+        return {
+            "success": True,
+            "image_path": image_path,
+            "prompt": prompt,
+            "analysis": response.choices[0].message.content
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Erreur lors de l'analyse de l'image {image_path}: {e}"
+        }
+
+
 def iterative_function_calling_system(user_request: str, max_iterations: int = 5) -> Dict[str, Any]:
     """
     Système de function calling itératif avec feedback et choix d'outils.
@@ -186,6 +401,46 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
                 "details": result
             }
             
+        elif chosen_action == "listFiles":
+            result = listFiles(action_args.get("directory", "."))
+            execution_result = {
+                "success": result.get("success", False),
+                "action": chosen_action,
+                "details": f"Listage {'réussi' if result.get('success') else 'échoué'}: {result.get('total_files', 0)} fichiers, {result.get('total_directories', 0)} dossiers" if result.get("success") else result.get("error")
+            }
+            
+        elif chosen_action == "readFile":
+            result = readFile(action_args.get("file_path"))
+            execution_result = {
+                "success": result.get("success", False),
+                "action": chosen_action,
+                "details": f"Lecture {'réussie' if result.get('success') else 'échouée'}: {result.get('lines', 0)} lignes" if result.get("success") else result.get("error")
+            }
+            
+        elif chosen_action == "runTests":
+            result = runTests(action_args.get("test_path", "test_*.py"))
+            execution_result = {
+                "success": result.get("success", False),
+                "action": chosen_action,
+                "details": f"Tests {'réussis' if result.get('success') else 'échoués'}: {result.get('stdout', result.get('stderr', ''))[:200]}"
+            }
+            
+        elif chosen_action == "webScraping":
+            result = webScraping(action_args.get("url"), action_args.get("selector"))
+            execution_result = {
+                "success": result.get("success", False),
+                "action": chosen_action,
+                "details": f"Scraping {'réussi' if result.get('success') else 'échoué'}: {action_args.get('url')}" if result.get("success") else result.get("error")
+            }
+            
+        elif chosen_action == "analyzeImage":
+            result = analyzeImage(action_args.get("image_path"), action_args.get("prompt", "Décris cette image"))
+            execution_result = {
+                "success": result.get("success", False),
+                "action": chosen_action,
+                "details": f"Analyse {'réussie' if result.get('success') else 'échouée'}: {action_args.get('image_path')}" if result.get("success") else result.get("error")
+            }
+            
         elif chosen_action == "choose_tool":
             result = choose_tool(action_args.get("context", ""))
             execution_result = {
@@ -211,7 +466,7 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
         
         print(f"✅ Résultat: {execution_result.get('details')}")
         
-        if execution_result.get("success") and chosen_action in ["writeFile", "launchPythonFile"]:
+        if execution_result.get("success") and chosen_action in ["writeFile", "launchPythonFile", "runTests"]:
             feedback = get_feedback(execution_result, user_request, iteration)
             if feedback.get("should_continue", True):
                 print(f"💭 Feedback: {feedback.get('message', 'Continuation...')}")
@@ -255,8 +510,12 @@ HISTORIQUE DES ACTIONS:
 TÂCHES DISPONIBLES:
 1. writeFile(path, content) - Écrire du contenu dans un fichier
 2. launchPythonFile(path) - Exécuter un fichier Python
-3. choose_tool(context) - Choisir un outil spécifique
-4. stop(reason) - Arrêter le processus
+3. listFiles(directory) - Lister les fichiers d'un répertoire
+4. readFile(file_path) - Lire le contenu d'un fichier existant
+5. runTests(test_path) - Exécuter des tests unitaires avec pytest
+6. webScraping(url, selector) - Faire du web scraping
+7. analyzeImage(image_path, prompt) - Analyser une image avec Pixtral
+8. stop(reason) - Arrêter le processus
 
 Analysez la situation et choisissez la prochaine action appropriée.
 """
@@ -269,7 +528,13 @@ def choose_next_action(context: str) -> Dict[str, Any]:
     prompt = f"""
 {context}
 
-Vous devez choisir la prochaine action à effectuer. Répondez UNIQUEMENT avec un JSON valide:
+RÈGLES LOGIQUES À SUIVRE :
+1. Si un fichier doit être créé ET exécuté : d'abord writeFile, puis launchPythonFile
+2. Si un fichier existe déjà et doit être exécuté : utiliser launchPythonFile
+3. Ne PAS recréer un fichier qui vient d'être créé avec succès
+4. Si la tâche est accomplie, utiliser stop
+
+Répondez UNIQUEMENT avec un JSON valide:
 
 {{
     "action": "nom_de_l_action",
@@ -281,12 +546,21 @@ Vous devez choisir la prochaine action à effectuer. Répondez UNIQUEMENT avec u
 }}
 
 Actions possibles:
-- writeFile: pour créer/modifier un fichier
-- launchPythonFile: pour exécuter un script Python
-- choose_tool: pour sélectionner un outil spécifique
-- stop: pour terminer le processus
+- writeFile: pour créer/modifier un fichier (uniquement si pas encore créé)
+- launchPythonFile: pour exécuter un script Python (après création)
+- listFiles: pour explorer les fichiers du projet (utile pour comprendre la structure)
+- readFile: pour lire le contenu d'un fichier existant (avant modification)
+- runTests: pour exécuter des tests unitaires avec pytest (vérifier que le code marche)
+- webScraping: pour extraire des données depuis une URL
+- analyzeImage: pour analyser des images avec l'IA vision Pixtral
+- stop: pour terminer le processus quand tout est fait
 
-Choisissez intelligemment en fonction du contexte et de l'objectif.
+RÈGLES SPÉCIALES POUR LES TESTS:
+- Si vous créez du code, créez AUSSI les tests unitaires
+- Utilisez runTests après création de tests pour vérifier que tout fonctionne
+- Nommez les fichiers de test avec le préfixe 'test_'
+
+Analysez l'historique pour voir ce qui a déjà été fait et choisissez la PROCHAINE étape logique.
 """
     
     try:
@@ -335,40 +609,68 @@ Choisissez intelligemment en fonction du contexte et de l'objectif.
 
 
 def get_feedback(execution_result: Dict, user_request: str, iteration: int) -> Dict[str, Any]:
-    """Obtient un feedback du LLM sur le résultat d'une action"""
-    prompt = f"""
-DEMANDE UTILISATEUR: {user_request}
-ITÉRATION: {iteration}
-ACTION EXÉCUTÉE: {execution_result.get('action')}
-RÉSULTAT: {execution_result.get('details')}
-
-Évaluez si cette action a bien progressé vers l'objectif de l'utilisateur.
-Répondez UNIQUEMENT avec un JSON valide:
-
-{{
-    "should_continue": true/false,
-    "message": "Votre évaluation et recommandation",
-    "confidence": 0.8
-}}
-
-Si should_continue est false, cela signifie que la tâche est accomplie.
-Si true, donnez des suggestions pour l'amélioration.
-"""
+    """Obtient un feedback simplifié basé sur la logique"""
+    action = execution_result.get('action')
+    success = execution_result.get('success')
     
-    try:
-        response = generateText(prompt, force_json=True)
-        feedback_data = json.loads(response)
-        
-        return {
-            "should_continue": feedback_data.get("should_continue", True),
-            "message": feedback_data.get("message", ""),
-            "confidence": feedback_data.get("confidence", 0.5)
-        }
-    except Exception as e:
+    # Analyse simple : si création réussie et demande d'exécution, alors continuer
+    if action == "writeFile" and success:
+        if "execute" in user_request.lower() or "exécute" in user_request.lower():
+            return {
+                "should_continue": True,
+                "message": "Fichier créé avec succès. Prochaine étape : exécuter le fichier.",
+                "confidence": 0.9
+            }
+        elif "test" in user_request.lower():
+            return {
+                "should_continue": True,
+                "message": "Code créé avec succès. Prochaine étape : créer et exécuter les tests.",
+                "confidence": 0.9
+            }
+        else:
+            return {
+                "should_continue": False,
+                "message": "Fichier créé avec succès. Tâche accomplie.",
+                "confidence": 0.9
+            }
+    
+    # Si exécution réussie, arrêter sauf si tests demandés
+    elif action == "launchPythonFile" and success:
+        if "test" in user_request.lower():
+            return {
+                "should_continue": True,
+                "message": "Code exécuté avec succès. Prochaine étape : créer les tests unitaires.",
+                "confidence": 0.9
+            }
+        else:
+            return {
+                "should_continue": False,
+                "message": "Fichier exécuté avec succès. Tâche accomplie.",
+                "confidence": 0.9
+            }
+    
+    # Si tests exécutés avec succès, arrêter
+    elif action == "runTests" and success:
         return {
             "should_continue": False,
-            "message": f"Erreur feedback: {e}",
-            "confidence": 0.0
+            "message": "Tests exécutés avec succès. Code vérifié et validé !",
+            "confidence": 0.9
+        }
+    
+    # Si échec, continuer pour réessayer
+    elif not success:
+        return {
+            "should_continue": True,
+            "message": f"Échec de l'action {action}. Réessayer.",
+            "confidence": 0.7
+        }
+    
+    # Par défaut, arrêter après quelques itérations
+    else:
+        return {
+            "should_continue": iteration < 2,
+            "message": "Action terminée.",
+            "confidence": 0.5
         }
 
 
