@@ -1,16 +1,19 @@
-import requests
 import json
 import subprocess
 import os
 import time
 from typing import Dict, Any, List
+from dotenv import load_dotenv
+from mistralai import Mistral
 
-MISTRAL_API_KEY = "OHgvSY6RrhHNkTY1M3RQ7ici0iLuDwPv"
-MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions"
+load_dotenv()
+
+api_key = os.environ["MISTRAL_API_KEY"]
+client = Mistral(api_key=api_key)
 
 def generateText(prompt: str, force_json: bool = False, conversation_history: List[Dict] = None) -> str:
     """
-    Fonction qui prend en entrée un prompt et envoie la requête à Mistral via leur API.
+    Fonction qui prend en entrée un prompt et envoie la requête à Mistral via leur SDK.
     
     Args:
         prompt (str): Le prompt à envoyer au LLM
@@ -20,50 +23,30 @@ def generateText(prompt: str, force_json: bool = False, conversation_history: Li
     Returns:
         str: La réponse du LLM
     """
-    headers = {
-        "Authorization": f"Bearer {MISTRAL_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    
-    # Construire les messages avec l'historique
     messages = []
     
-    # Ajouter l'historique s'il existe
     if conversation_history:
         messages.extend(conversation_history)
     
-    # Ajouter le message actuel
-    messages.append({
-        "role": "user", 
-        "content": prompt
-    })
-    
-    data = {
-        "model": "mistral-small-latest",
-        "messages": messages,
-        "max_tokens": 8000,  # Tokens augmentés pour des réponses plus longues
-        "temperature": 0.7
-    }
-    
-    # Ajouter le format JSON seulement si demandé
-    if force_json:
-        data["response_format"] = {
-            "type": "json_object"
-        }
+    messages.append({"role": "user", "content": prompt})
     
     try:
-        response = requests.post(MISTRAL_API_URL, headers=headers, json=data)
-        response.raise_for_status()
+        kwargs = {
+            "model": "mistral-small-latest",
+            "messages": messages,
+            "max_tokens": 8000,
+            "temperature": 0.7
+        }
         
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
+        if force_json:
+            kwargs["response_format"] = {"type": "json_object"}
         
-    except requests.exceptions.RequestException as e:
-        return f"Erreur lors de la requête à l'API Mistral: {e}"
-    except KeyError as e:
-        return f"Erreur lors du parsing de la réponse: {e}"
+        response = client.chat.complete(**kwargs)
+        
+        return response.choices[0].message.content
+        
     except Exception as e:
-        return f"Erreur inattendue: {e}"
+        return f"Erreur lors de l'appel à l'API Mistral: {e}"
 
 
 def writeFile(path: str, content: str) -> bool:
@@ -169,10 +152,8 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
         print(f"🔄 ITÉRATION {iteration}/{max_iterations}")
         print(f"{'='*60}")
         
-        # Construire le contexte pour cette itération
         context = build_iteration_context(user_request, conversation_history, task_results, iteration)
         
-        # Demander au LLM de choisir la prochaine action
         action_result = choose_next_action(context)
         
         if not action_result.get("success"):
@@ -185,7 +166,6 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
         print(f"🎯 Action choisie: {chosen_action}")
         print(f"📋 Arguments: {action_args}")
         
-        # Exécuter l'action choisie
         if chosen_action == "stop":
             print(f"🛑 Arrêt demandé: {action_args.get('reason', 'Tâche terminée')}")
             break
@@ -221,7 +201,6 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
                 "details": f"Action inconnue: {chosen_action}"
             }
         
-        # Enregistrer les résultats
         task_results.append(execution_result)
         conversation_history.append({
             "iteration": iteration,
@@ -232,9 +211,7 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
         
         print(f"✅ Résultat: {execution_result.get('details')}")
         
-        # Évaluer si on doit continuer
         if execution_result.get("success") and chosen_action in ["writeFile", "launchPythonFile"]:
-            # Demander un feedback au LLM sur le résultat
             feedback = get_feedback(execution_result, user_request, iteration)
             if feedback.get("should_continue", True):
                 print(f"💭 Feedback: {feedback.get('message', 'Continuation...')}")
@@ -242,7 +219,6 @@ def iterative_function_calling_system(user_request: str, max_iterations: int = 5
                 print(f"✨ Feedback: {feedback.get('message', 'Tâche accomplie!')}")
                 break
     
-    # Résultat final
     final_result = {
         "success": True,
         "total_iterations": iteration,
@@ -314,7 +290,27 @@ Choisissez intelligemment en fonction du contexte et de l'objectif.
 """
     
     try:
+        print(f"🔍 Envoi du prompt au LLM...")
         response = generateText(prompt, force_json=True)
+        print(f"📝 Réponse brute du LLM: '{response}'")
+        
+        if not response or response.strip() == "":
+            print(f"⚠️ Réponse vide du LLM")
+            return {
+                "success": False,
+                "error": "Réponse vide du LLM"
+            }
+            
+        # Nettoyer la réponse au cas où il y aurait des caractères parasites
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+        
+        print(f"🧹 Réponse nettoyée: '{response}'")
+        
         action_data = json.loads(response)
         
         return {
@@ -323,7 +319,15 @@ Choisissez intelligemment en fonction du contexte et de l'objectif.
             "arguments": action_data.get("arguments", {}),
             "reasoning": action_data.get("reasoning", "")
         }
+    except json.JSONDecodeError as e:
+        print(f"❌ Erreur JSON: {e}")
+        print(f"❌ Réponse problématique: '{response}'")
+        return {
+            "success": False,
+            "error": f"Erreur JSON: {e} - Réponse: '{response[:100]}'"
+        }
     except Exception as e:
+        print(f"❌ Erreur générale: {e}")
         return {
             "success": False,
             "error": f"Erreur lors du choix d'action: {e}"
@@ -406,17 +410,14 @@ Si aucune fonction n'est appropriée, réponds avec:
 }}
 """
     
-    # Obtenir la réponse du LLM en format JSON natif
     llm_response = generateText(function_calling_prompt, force_json=True)
     print(f"Réponse du LLM: {llm_response}")
     
     try:
-        # Parser directement la réponse JSON (plus de nettoyage nécessaire !)
         function_call = json.loads(llm_response)
         function_name = function_call.get("function_name")
         arguments = function_call.get("arguments", {})
         
-        # Exécuter la fonction demandée
         if function_name == "writeFile":
             path = arguments.get("path")
             content = arguments.get("content")

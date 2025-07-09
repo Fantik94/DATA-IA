@@ -4,13 +4,11 @@ import time
 import threading
 from llm_function_calling import generateText, function_calling_system, iterative_function_calling_system
 
-# Codes couleur ANSI
 class Couleurs:
     RESET = '\033[0m'
     BOLD = '\033[1m'
     DIM = '\033[2m'
     
-    # Couleurs de base
     ROUGE = '\033[31m'
     VERT = '\033[32m'
     JAUNE = '\033[33m'
@@ -19,7 +17,6 @@ class Couleurs:
     CYAN = '\033[36m'
     BLANC = '\033[37m'
     
-    # Couleurs vives
     ROUGE_VIF = '\033[91m'
     VERT_VIF = '\033[92m'
     JAUNE_VIF = '\033[93m'
@@ -37,7 +34,7 @@ class Couleurs:
 def animation_chargement(message, duree=2):
     """Animation de chargement avec points"""
     def animate():
-        for i in range(duree * 4):  # 4 cycles par seconde
+        for i in range(duree * 4):  
             if i % 4 == 0:
                 print(f"\r{Couleurs.CYAN}{message}   {Couleurs.RESET}", end="", flush=True)
             elif i % 4 == 1:
@@ -47,7 +44,7 @@ def animation_chargement(message, duree=2):
             else:
                 print(f"\r{Couleurs.CYAN}{message}...{Couleurs.RESET}", end="", flush=True)
             time.sleep(0.25)
-        print()  # Nouvelle ligne
+        print()  
     
     thread = threading.Thread(target=animate)
     thread.daemon = True
@@ -55,7 +52,7 @@ def animation_chargement(message, duree=2):
     return thread
 
 def afficher_titre():
-    """Affiche un titre stylé avec animation"""
+    
     titre = [
         "╔══════════════════════════════════════════════════════════╗",
         "║                                                          ║",
@@ -71,7 +68,7 @@ def afficher_titre():
         time.sleep(0.1)
 
 def afficher_aide():
-    """Affiche l'aide du chat interactif avec style"""
+    
     print(f"\n{Couleurs.JAUNE_VIF}╔════════════════════════════════════════════════════════════╗{Couleurs.RESET}")
     print(f"{Couleurs.JAUNE_VIF}║                         AIDE                               ║{Couleurs.RESET}")
     print(f"{Couleurs.JAUNE_VIF}╚════════════════════════════════════════════════════════════╝{Couleurs.RESET}")
@@ -107,10 +104,9 @@ def effacer_ecran():
 def chat_interactif():
     """Interface de chat interactive avec le LLM"""
     mode_function_calling = False
-    conversation_history = []  # Historique de la conversation pour le mode normal
-    memoire_active = False  # Mémoire désactivée par défaut
+    conversation_history = [] 
+    memoire_active = False  
     
-    # Affichage d'accueil stylé
     effacer_ecran()
     afficher_titre()
     
@@ -121,7 +117,6 @@ def chat_interactif():
     
     while True:
         try:
-            # Affichage du mode actuel avec style et statut mémoire
             if mode_function_calling:
                 mode_text = f"{Couleurs.MAGENTA_VIF}🔧 FUNCTION{Couleurs.RESET}"
                 mode_bg = f"{Couleurs.BG_NOIR}{Couleurs.MAGENTA_VIF}"
@@ -129,15 +124,12 @@ def chat_interactif():
                 mode_text = f"{Couleurs.BLEU_VIF}💬 CHAT{Couleurs.RESET}"
                 mode_bg = f"{Couleurs.BG_NOIR}{Couleurs.BLEU_VIF}"
             
-            # Ajouter l'indicateur de mémoire
             memoire_indicator = f"{Couleurs.JAUNE}🧠{Couleurs.RESET}" if memoire_active else f"{Couleurs.DIM}🧠{Couleurs.RESET}"
             
             prompt_user = f"\n{mode_bg} {mode_text} {Couleurs.RESET} {memoire_indicator} {Couleurs.VERT_VIF}Vous:{Couleurs.RESET} "
             
-            # Saisie utilisateur
             user_input = input(prompt_user).strip()
             
-            # Gestion des commandes avec style
             if user_input.lower() in ['/quit', '/exit', '/q']:
                 print(f"\n{Couleurs.JAUNE_VIF}👋 Au revoir ! Merci d'avoir utilisé le chat interactif.{Couleurs.RESET}")
                 print(f"{Couleurs.DIM}À bientôt ! 🚀{Couleurs.RESET}")
@@ -159,6 +151,16 @@ def chat_interactif():
                 print(f"{Couleurs.DIM}Vous pouvez maintenant discuter librement avec le LLM.{Couleurs.RESET}")
                 if len(conversation_history) > 0:
                     print(f"{Couleurs.JAUNE}🧠 Historique conservé ({len(conversation_history)//2} échanges){Couleurs.RESET}")
+                continue
+            
+            elif user_input.lower() in ['/memoire', '/memory']:
+                memoire_active = not memoire_active
+                status = f"{Couleurs.VERT_VIF}activée{Couleurs.RESET}" if memoire_active else f"{Couleurs.ROUGE_VIF}désactivée{Couleurs.RESET}"
+                print(f"\n{Couleurs.JAUNE_VIF}🧠 Mémoire conversationnelle {status} !{Couleurs.RESET}")
+                if memoire_active:
+                    print(f"{Couleurs.DIM}Le LLM se souviendra de vos échanges précédents dans cette session.{Couleurs.RESET}")
+                else:
+                    print(f"{Couleurs.DIM}Le LLM traitera chaque message indépendamment.{Couleurs.RESET}")
                 continue
             
             elif user_input.lower() in ['/historique', '/history']:
@@ -184,20 +186,17 @@ def chat_interactif():
                 print(f"\n{Couleurs.VERT_VIF}✨ Chat et mémoire effacés ! Nouvelle conversation...{Couleurs.RESET}")
                 continue
             
-            # Ignorer les entrées vides
             if not user_input:
                 continue
             
-            # Traitement selon le mode avec animation
             print(f"\n{Couleurs.CYAN_VIF}🤖 Mistral:{Couleurs.RESET} ", end="", flush=True)
             
             if mode_function_calling:
-                # Mode function calling itératif avec animation
                 animation_thread = animation_chargement("Analyse et planification en cours", 1)
                 time.sleep(1)
-                print()  # Nouvelle ligne après l'animation
+                print()  
                 
-                # Utiliser le système itératif pour plus de sophistication
+               
                 result = iterative_function_calling_system(user_input, max_iterations=3)
                 
                 if result.get("success"):
@@ -207,7 +206,6 @@ def chat_interactif():
                     print(f"   {Couleurs.DIM}• Itérations: {result.get('total_iterations', 0)}{Couleurs.RESET}")
                     print(f"   {Couleurs.DIM}• Statut: {result.get('final_status', 'unknown')}{Couleurs.RESET}")
                     
-                    # Afficher les actions principales
                     if result.get('task_results'):
                         print(f"{Couleurs.MAGENTA}🔧 Actions effectuées :{Couleurs.RESET}")
                         for i, task in enumerate(result.get('task_results', []), 1):
@@ -217,20 +215,20 @@ def chat_interactif():
                     print(f"{Couleurs.ROUGE_VIF}❌ Erreur dans le processus itératif :{Couleurs.RESET} {result.get('error', 'Erreur inconnue')}")
             
             else:
-                # Mode chat normal avec animation et mémoire
                 animation_thread = animation_chargement("Réflexion en cours", 1)
-                response = generateText(user_input, conversation_history=conversation_history)
+                # Utiliser l'historique seulement si la mémoire est activée
+                history_to_use = conversation_history if memoire_active else None
+                response = generateText(user_input, conversation_history=history_to_use)
                 time.sleep(0.5)  # Petite pause pour l'effet
                 print(f"\n{Couleurs.BLANC}{response}{Couleurs.RESET}")
                 
-                # Ajouter à l'historique
+                # Toujours sauvegarder l'historique pour /historique, même si mémoire désactivée
                 conversation_history.extend([
                     {"role": "user", "content": user_input},
                     {"role": "assistant", "content": response}
                 ])
                 
-                # Limiter l'historique pour éviter de dépasser les tokens
-                max_history_pairs = 5  # Garder les 5 derniers échanges
+                max_history_pairs = 5 
                 if len(conversation_history) > max_history_pairs * 2:
                     conversation_history = conversation_history[-(max_history_pairs * 2):]
         
@@ -243,7 +241,6 @@ def chat_interactif():
 
 if __name__ == "__main__":
     try:
-        # Lancer directement le chat interactif
         chat_interactif()
         
     except Exception as e:
