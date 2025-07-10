@@ -7,7 +7,7 @@ from llm_function_calling import (
     listFiles, readFile, runTests, webScraping, 
     analyzeImage, iterative_function_calling_system
 )
-²
+
 def demo_nouvelles_capacites():
     """Démonstration des nouvelles fonctionnalités"""
     
